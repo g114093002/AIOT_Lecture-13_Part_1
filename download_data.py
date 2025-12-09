@@ -1,6 +1,6 @@
 import requests
 
-url = "https://opendata.cwa.gov.tw/fileapi/v1/opendataapi/F-A0010-001?Authorization=CWA-0CB59CAA-65F8-4C1A-989E-183572B28056&format=JSON"
+url = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=CWA-0CB59CAA-65F8-4C1A-989E-183572B28056"
 response = requests.get(url)
 
 if response.status_code == 200:

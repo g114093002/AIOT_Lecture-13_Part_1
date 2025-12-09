@@ -1,4 +1,3 @@
-
 import json
 import sqlite3
 
@@ -12,33 +11,35 @@ def process_and_store_data():
     cursor = conn.cursor()
 
     # Create table
+    cursor.execute('DROP TABLE IF EXISTS weather')
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS weather (
+        CREATE TABLE weather (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             location TEXT,
-            min_temp REAL,
-            max_temp REAL,
+            lat REAL,
+            lon REAL,
+            temperature REAL,
             description TEXT
         )
     ''')
 
-    # The actual data is in a different location for this dataset
-    if 'cwaopendata' in data and 'resources' in data['cwaopendata']:
-        locations = data['cwaopendata']['resources']['resource']['data']['agrWeatherForecasts']['weatherForecasts']['location']
-        for location in locations:
-            location_name = location['locationName']
-            wx_daily = location['weatherElements']['Wx']['daily']
-            min_t_daily = location['weatherElements']['MinT']['daily']
-            max_t_daily = location['weatherElements']['MaxT']['daily']
-
-            for i in range(len(wx_daily)):
-                description = wx_daily[i]['weather']
-                min_temp = min_t_daily[i]['temperature']
-                max_temp = max_t_daily[i]['temperature']
-
+    if 'records' in data and 'Station' in data['records']:
+        stations = data['records']['Station']
+        for station in stations:
+            location_name = station['StationName']
+            temperature = station['WeatherElement']['AirTemperature']
+            description = station['WeatherElement']['Weather']
+            lat = None
+            lon = None
+            for coords in station['GeoInfo']['Coordinates']:
+                if coords['CoordinateName'] == 'WGS84':
+                    lat = float(coords['StationLatitude'])
+                    lon = float(coords['StationLongitude'])
+            
+            if lat is not None and lon is not None and temperature != '-99':
                 # Insert a row of data
-                cursor.execute("INSERT INTO weather (location, min_temp, max_temp, description) VALUES (?, ?, ?, ?)",
-                               (location_name, min_temp, max_temp, description))
+                cursor.execute("INSERT INTO weather (location, lat, lon, temperature, description) VALUES (?, ?, ?, ?, ?)",
+                               (location_name, lat, lon, float(temperature), description))
     else:
         print("Could not find the expected data structure in the JSON file.")
 
